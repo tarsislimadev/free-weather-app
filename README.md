@@ -1,1 +1,5 @@
-# free-weather-app
+# Free Weather APP
+
+## license
+
+[MIT](./LICENSE)
