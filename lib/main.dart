@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 void main() {
   runApp(const MyApp());
@@ -6,15 +7,15 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Free Weather App',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlueAccent),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Free Weather App'),
     );
   }
 }
@@ -29,16 +30,33 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  double temperature = -100;
+  String error = '';
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  final dio = Dio();
+
+  void requestOpenMeteoApi() {
+    dio
+        .get(
+          'https://api.open-meteo.com/v1/forecast?latitude=-22.393518&longitude=-47.564724&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m',
+        )
+        .then((response) {
+          setState(() {
+            temperature = response.data['current']['temperature_2m'];
+            error = ''; // Clear any previous errors
+          });
+        })
+        .catchError((error) {
+          print('Error fetching temperature: $error');
+          setState(() {
+            error = 'Error fetching temperature';
+          });
+        });
   }
 
   @override
   Widget build(BuildContext context) {
+    requestOpenMeteoApi();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -46,20 +64,12 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
-          mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            const Text('Temperature:'),
+            Text('$temperature°C'),
+            if (error.isNotEmpty) Text(error)
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
