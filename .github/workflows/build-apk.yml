@@ -1,4 +1,4 @@
-name: Build Signed APK and Upload to GitHub Releases
+name: Build and Upload APK file to GitHub Releases
 
 permissions:
   contents: write
