@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -30,33 +31,32 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  double temperature = -100;
-  String error = '';
+  var apiUrl = Uri.parse('https://api.open-meteo.com/v1/forecast?latitude=-22.393518&longitude=-47.564724&current=temperature_2m');
 
-  final dio = Dio();
+  late Future<String> forecast;
 
-  void requestOpenMeteoApi() {
-    dio
-        .get(
-          'https://api.open-meteo.com/v1/forecast?latitude=-22.393518&longitude=-47.564724&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m',
-        )
-        .then((response) {
-          setState(() {
-            temperature = response.data['current']['temperature_2m'];
-            error = ''; // Clear any previous errors
-          });
-        })
-        .catchError((error) {
-          print('Error fetching temperature: $error');
-          setState(() {
-            error = 'Error fetching temperature';
-          });
-        });
+  Future<String> httpClientGet() async {
+    try {
+      var response = await http.Client().get(apiUrl);
+      if (response.statusCode == 200) {
+        Map<String, dynamic> respMap = jsonDecode(response.body.toString());
+        return '${respMap['current']['temperature_2m']}${respMap['current_units']['temperature_2m']}';
+      } else {
+        return  '${response.statusCode} ${response.reasonPhrase}';
+      }
+    } catch (e) {
+      return  'Error: $e';
+    }
+  }
+
+  @override
+  initState() {
+    super.initState();
+    forecast = httpClientGet();
   }
 
   @override
   Widget build(BuildContext context) {
-    requestOpenMeteoApi();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -66,8 +66,13 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: [
             const Text('Temperature:'),
-            if (temperature != -100) Text('$temperature°C'),
-            if (error.isNotEmpty) Text(error),
+            FutureBuilder(
+              future: forecast,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) return Text(snapshot.data!.toString());
+                return Text('Loading...');
+              },
+            ),
           ],
         ),
       ),
