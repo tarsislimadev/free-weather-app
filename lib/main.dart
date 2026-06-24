@@ -66,8 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: [
             const Text('Temperature:'),
-            Text('$temperature°C'),
-            if (error.isNotEmpty) Text(error)
+            if (temperature != -100) Text('$temperature°C'),
+            if (error.isNotEmpty) Text(error),
           ],
         ),
       ),
